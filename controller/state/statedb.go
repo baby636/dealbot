@@ -364,6 +364,7 @@ func (s *stateDB) Update(ctx context.Context, taskID string, req tasks.UpdateTas
 			return ErrWrongWorker
 		}
 
+		println("updateTask with original", string(serialized))
 		updatedTask, err := task.UpdateTask(req)
 		if err != nil {
 			return err
@@ -373,6 +374,7 @@ func (s *stateDB) Update(ctx context.Context, taskID string, req tasks.UpdateTas
 		if err != nil {
 			return err
 		}
+		println("saving task", string(data))
 
 		// save the update back to DB
 		_, err = tx.ExecContext(ctx, updateTaskDataSQL, taskID, data, lnk.String())
@@ -395,6 +397,7 @@ func (s *stateDB) Update(ctx context.Context, taskID string, req tasks.UpdateTas
 
 		// finish if neccesary
 		if updatedTask.Status == *tasks.Successful || updatedTask.Status == *tasks.Failed {
+			println("finalizing task")
 			finalized, err := updatedTask.Finalize(ctx, txContextStorer(ctx, tx))
 			if err != nil {
 				return err

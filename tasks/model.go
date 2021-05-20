@@ -105,7 +105,7 @@ var RetrievalStages = map[string]StageDetails{
 }
 
 // the multi-codec and hash we use for cid links by default
-var linkProto = linksystem.LinkBuilder{cid.Prefix{
+var linkProto = linksystem.LinkBuilder{Prefix: cid.Prefix{
 	Version:  1,
 	Codec:    uint64(multicodec.DagJson),
 	MhType:   uint64(multicodec.Sha2_256),
@@ -253,6 +253,12 @@ func (t *_Task) Update(status Status, stage string, details StageDetails, runCou
 		} else {
 			updatedTask.PastStageDetails = _List_StageDetails__Maybe{m: schema.Maybe_Value, v: &_List_StageDetails{x: append(t.PastStageDetails.v.x, *t.CurrentStageDetails.v)}}
 		}
+		fmt.Printf("added stage: %v %q\n",
+			time.Unix(0, t.CurrentStageDetails.Must().UpdatedAt.Must().Int()),
+			t.CurrentStageDetails.Must().Description.Must().String(),
+		)
+	} else {
+		println("skip stage", stage != t.Stage.x, t.CurrentStageDetails.Exists())
 	}
 
 	if details == nil {
@@ -298,6 +304,25 @@ func (t *_Task) Finalize(ctx context.Context, s ipld.Storer) (FinishedTask, erro
 }
 
 func parseFinalLogs(t Task) (int, string, string, _Int__Maybe, _Int__Maybe, _Int__Maybe) {
+	stageList := &_List_StageDetails{}
+	if t.PastStageDetails.Exists() {
+		stageList = t.PastStageDetails.Must()
+		fmt.Printf("recorded stages: %d\n", len(stageList.x))
+	} else {
+		fmt.Printf("PastStageDetails does not exist")
+	}
+	for i, stage := range stageList.x {
+		fmt.Printf("stage %d: %v %q\n", i,
+			time.Unix(0, stage.UpdatedAt.Must().Int()),
+			stage.Description.Must().String(),
+		)
+		for j, entry := range stage.Logs.x {
+			fmt.Printf("stage %d log %d: %v %q\n", i, j,
+				time.Unix(0, entry.UpdatedAt.Int()),
+				entry.Log.String(),
+			)
+		}
+	}
 	return 0, "", "", _Int__Maybe{}, _Int__Maybe{}, _Int__Maybe{}
 }
 
