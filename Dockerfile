@@ -10,7 +10,7 @@ COPY . .
 RUN go get -d -v ./...
 RUN go build -o dealbot ./
 
-FROM alpine
+FROM alpine:3.18.3
 # Copy our static executable.
 COPY --from=builder /go/src/app/dealbot /dealbot
 ENTRYPOINT ["/dealbot"]
